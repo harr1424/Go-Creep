@@ -3,63 +3,33 @@ package main
 import (
 	"log"
 	"net/http"
-	"sync"
 
-	"golang.org/x/time/rate"
+	GoCreep "github.com/harr1424/Go-Creep/gocreep"
+	"github.com/rs/cors"
 )
 
-type RateLimiter struct {
-	limiters map[string]*rate.Limiter
-	mu       sync.Mutex
-}
-
-type UserData struct {
-	UserAgent string `json:"userAgent"`
-	Screen    struct {
-		Width  int `json:"width"`
-		Height int `json:"height"`
-	} `json:"screen"`
-	Language string `json:"language"`
-	Timezone string `json:"timezone"`
-	Referrer string `json:"referrer"`
-	Date     string `json:"date"`
-}
-
-type IPData struct {
-	IP        string  `json:"ip"`
-	City      string  `json:"city"`
-	Region    string  `json:"region"`
-	Country   string  `json:"country"`
-	Latitude  float64 `json:"latitude"`
-	Longitude float64 `json:"longitude"`
-}
-
-type FullData struct {
-	UserData `json:"userData"`
-	IPData   `json:"ipData"`
-}
-
-var rateLimiter = NewRateLimiter()
-
-var homePageVisitors = make([]FullData, 0)
-var aboutPageVisitors = make([]FullData, 0)
-var academicPortfolioPageVisitors = make([]FullData, 0)
-var EULAPageVisitors = make([]FullData, 0)
-var blogPrivacyPageVisitors = make([]FullData, 0)
-var weatherPrivacyPageVisitors = make([]FullData, 0)
-
 func main() {
-	http.HandleFunc("/HomePage", receiveDataFromHomePage)
-	http.HandleFunc("/AboutPage", receiveDataFromHAboutPage)
-	http.HandleFunc("/AcademicPage", receiveDataFromAcademicPortfolioPage)
-	http.HandleFunc("/EULAPage", receiveDataFromEULAPage)
-	http.HandleFunc("/BlogPrivacyPage", receiveDataFromBlogPrivacyPage)
-	http.HandleFunc("/WeatherPrivacyPage", receiveDataFromWeatherPrivacyPage)
+	mux := http.NewServeMux()
 
-	http.HandleFunc("/GetUserInfo", rateLimited(getData))
+	mux.HandleFunc("/HomePage", GoCreep.ReceiveDataFromHomePage)
+	mux.HandleFunc("/AboutPage", GoCreep.ReceiveDataFromHAboutPage)
+	mux.HandleFunc("/AcademicPage", GoCreep.ReceiveDataFromAcademicPortfolioPage)
+	mux.HandleFunc("/EULAPage", GoCreep.ReceiveDataFromEULAPage)
+	mux.HandleFunc("/BlogPrivacyPage", GoCreep.ReceiveDataFromBlogPrivacyPage)
+	mux.HandleFunc("/WeatherPrivacyPage", GoCreep.ReceiveDataFromWeatherPrivacyPage)
+	mux.HandleFunc("/GetUserInfo", GoCreep.RateLimited(GoCreep.DownloadReport))
+
+	c := cors.New(cors.Options{
+		AllowedOrigins:   []string{"http://localhost:5500", "http://localhost:5500"},
+		AllowedMethods:   []string{"POST"},
+		AllowedHeaders:   []string{"Content-Type"},
+		AllowCredentials: true,
+	})
+
+	handler := c.Handler(mux)
 
 	log.Println("Server is listening on port 4141...")
-	if err := http.ListenAndServe(":4141", nil); err != nil {
+	if err := http.ListenAndServe(":4141", handler); err != nil {
 		log.Fatal("Server failed to start:", err)
 	}
 }
