@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"unicode"
 )
 
 type UserData struct {
