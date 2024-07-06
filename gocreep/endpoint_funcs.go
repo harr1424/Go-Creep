@@ -112,7 +112,7 @@ func DownloadReport(w http.ResponseWriter, r *http.Request) {
 	queryParams := r.URL.Query()
 	providedToken := queryParams.Get("token")
 
-	if providedToken == "" || providedToken != token {
+	if err := validateToken(providedToken); err != nil || providedToken != token {
 		http.Error(w, "Forbidden", http.StatusForbidden)
 		return
 	}

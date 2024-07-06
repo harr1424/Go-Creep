@@ -2,6 +2,7 @@ package GoCreep
 
 import (
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 )
@@ -84,4 +85,19 @@ func getFloat64FromMap(m map[string]interface{}, key string) float64 {
 		return val.(float64)
 	}
 	return 0.0
+}
+
+func validateToken(token string) error {
+    if len(token) == 0 {
+        return errors.New("token is empty")
+    }
+    
+    // Check if the token is alphanumeric
+    for _, char := range token {
+        if !unicode.IsLetter(char) && !unicode.IsDigit(char) {
+            return errors.New("token contains invalid characters")
+        }
+    }
+    
+    return nil
 }
