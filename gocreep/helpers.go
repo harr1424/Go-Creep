@@ -6,6 +6,27 @@ import (
 	"net/http"
 )
 
+type UserData struct {
+	UserAgent string `json:"userAgent"`
+	Screen    struct {
+		Width  int `json:"width"`
+		Height int `json:"height"`
+	} `json:"screen"`
+	Language string `json:"language"`
+	Timezone string `json:"timezone"`
+	Referrer string `json:"referrer"`
+	Date     string `json:"date"`
+}
+
+type FullData struct {
+	UserData
+	IP        string  `json:"ip"`
+	City      string  `json:"city"`
+	Region    string  `json:"region"`
+	Country   string  `json:"country"`
+	Latitude  float64 `json:"latitude"`
+	Longitude float64 `json:"longitude"`
+}
 
 func getIpInfo() (map[string]interface{}, error) {
 	resp, err := http.Get("https://ipapi.co/json/")
