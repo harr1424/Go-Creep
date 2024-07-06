@@ -34,7 +34,7 @@ func main() {
 	r.Use(securityHeadersMiddleware)
 
 	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:5500", "http://localhost:5500"},
+		AllowedOrigins:   []string{"http://localhost:5500", "http://localhost:5500"}, // change accordingly
 		AllowedMethods:   []string{"POST"},
 		AllowedHeaders:   []string{"Content-Type"},
 		AllowCredentials: true,
