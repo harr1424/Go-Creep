@@ -1,8 +1,11 @@
 package GoCreep
 
 import (
+	"log"
 	"net/http"
+	"strings"
 	"sync"
+	"time"
 
 	"golang.org/x/time/rate"
 )
@@ -16,12 +19,19 @@ var rateLimiter = NewRateLimiter()
 
 func RateLimited(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
 		ip := getIP(r)
 		limiter := rateLimiter.GetLimiter(ip)
 
 		if limiter.Allow() {
+			log.Println("Request allowed for IP:", ip)
 			next.ServeHTTP(w, r)
 		} else {
+			log.Println("Request rate limited for IP:", ip)
 			http.Error(w, "Too Many Requests", http.StatusTooManyRequests)
 		}
 	}
@@ -39,7 +49,7 @@ func (r *RateLimiter) GetLimiter(ip string) *rate.Limiter {
 
 	limiter, exists := r.limiters[ip]
 	if !exists {
-		limiter = rate.NewLimiter(1*60*60, 1) // 1 request per hour
+		limiter = rate.NewLimiter(rate.Every(1*time.Hour), 1) // 1 request every hour
 		r.limiters[ip] = limiter
 	}
 
@@ -51,5 +61,15 @@ func getIP(r *http.Request) string {
 	if ip == "" {
 		ip = r.RemoteAddr
 	}
+
+	// Extract the IP address without the port
+	if strings.Contains(ip, ":") {
+		ip = ip[:strings.LastIndex(ip, ":")]
+		if strings.Count(ip, ":") > 1 { // IPv6 address
+			ip = strings.Trim(ip, "[]")
+		}
+	}
+
+	log.Println("Extracted IP address:", ip)
 	return ip
 }
